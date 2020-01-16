@@ -9,13 +9,13 @@ class Player():
         self.y = 0
         self.image = ""
 
-    def __init__(self, x, y, xRange, yRange, image):
-        #pygame.sprite.Sprite.__init__(self)
+    def __init__(self, x, y, xRange, yRange, image, speed):
         self.image = image
         self.xRange = xRange
         self.yRange = yRange
         self.x = x
         self.y = y
+        self.speed = speed
 
     def update(self, *args):
         self.x = args[0]
