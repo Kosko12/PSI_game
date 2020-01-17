@@ -120,13 +120,14 @@ def if_in_danger(p):
                                                      pow(abs(p.gene.y_orientation * (ar.y - lefty)), 2))
                     r_attr = p.gene.x_orientation * (pow(p.gene.x_orientation*(rightx - ar.x), 2) +
                                                      pow(abs(p.gene.x_orientation*(righty - ar.y)), 2))
-                    danger = r_attr - l_attr
-                    if danger > 0 or p.x + p.xRange < 800:
+                    danger = prev_dng + r_attr - l_attr
+                    if danger > 0 and p.x + p.xRange < 800:
                         p.speed = p.get_max_speed()
-                    elif danger <= 0 or p.x - p.xRange > 0:
+                    elif danger <= 0 and p.x - p.xRange > 0:
                         p.speed = -1 * p.get_max_speed()
                     else:
                         p.speed = 0
+                    prev_dng = danger
             else:
                 if_moving = False
                 if not guard:
@@ -329,6 +330,7 @@ def main(thr):  # main function
                 else:
                     collapse = True
                     thr.join()
+                    d = input()
                     pygame.quit()
                     sys.exit()
             elif arr.y > 550:
