@@ -1,6 +1,6 @@
 
 
-class Arrow():
+class Arrow:
 
     def __init__(self, x, y, xRange, yRange, image):
         # pygame.sprite.Sprite.__init__(self)
