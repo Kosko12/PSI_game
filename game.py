@@ -34,7 +34,7 @@ busy = {}
 arrow_for_player = []
 
 population = 8
-generations = 4
+generations = 65
 gen_counter = 1
 ###########################################################################
 
@@ -92,35 +92,43 @@ def if_in_danger(p):
         lock.acquire()
         loc_a = arrows
         lock.release()
-        left = 0
-        right = 800
+        leftx = 1
+        lefty = 1
+        rightx = 800
+        righty = 1
         guard = False
-
+        if_moving = False
+        danger = p.fear.curr_dng
+        prev_dng = p.fear.prev_dng
         for ar in loc_a:
-            if p.x - 1 <= ar.x and (p.x + p.xRange) + 1 > ar.x:
-                guard = 1
-                busy.update({p: 1})
-                for closest in loc_a:
-                    if closest != ar:
-                        if closest.x < ar.x:
-                            if closest.x > left:
-                                left = closest.x
-                        else:
-                            if closest.x < right:
-                                right = closest.x
-                    else:
-                        if p.speed == 0:
-                            if 800 - p.x < p.x + p.xRange:
-                                p.speed = -1. * p.get_max_speed()
+            if if_moving == False:
+                if p.x - 1 <= ar.x and (p.x + p.xRange) + 1 > ar.x:
+                    if_moving = True
+                    guard = 1
+                    busy.update({p: 1})
+                    for closest in loc_a:
+                        if closest != ar:
+                            if closest.x < ar.x:
+                                if closest.x > leftx:
+                                    leftx = closest.x
+                                    lefty = closest.y
                             else:
-                                p.speed = p.get_max_speed()
-                if if_match(ar.x, right, p.x + p.xRange):
-                    if p.speed <= 0:
+                                if closest.x < rightx:
+                                    rightx = closest.x
+                                    righty = closest.y
+                    l_attr = p.gene.x_orientation * (pow(p.gene.x_orientation*(ar.x - leftx), 2) +
+                                                     pow(abs(p.gene.y_orientation * (ar.y - lefty)), 2))
+                    r_attr = p.gene.x_orientation * (pow(p.gene.x_orientation*(rightx - ar.x), 2) +
+                                                     pow(abs(p.gene.x_orientation*(righty - ar.y)), 2))
+                    danger = r_attr - l_attr
+                    if danger > 0 or p.x + p.xRange < 800:
                         p.speed = p.get_max_speed()
-                elif if_match(left, ar.x, p.x + p.xRange):
-                    if p.speed >= 0:
-                        p.speed = -1. * p.get_max_speed()
+                    elif danger <= 0 or p.x - p.xRange > 0:
+                        p.speed = -1 * p.get_max_speed()
+                    else:
+                        p.speed = 0
             else:
+                if_moving = False
                 if not guard:
                     busy.update({p: 0})
                 if busy.get(p) == 0:
@@ -187,7 +195,7 @@ def load_arrow(time_gap):  # thread function which loads arrow into the screen
     while checker:
         lock.acquire()
         xPos = random.randrange(800)
-        if len(arrows) < 17:
+        if len(arrows) < 13:
             ar = Arrow.Arrow(xPos, 0., 18., 28., 'arrow.png')
             arrows.append(ar)
 
@@ -199,6 +207,19 @@ def load_arrow(time_gap):  # thread function which loads arrow into the screen
 
         if collapse:
             checker = False
+
+
+def get_champion(champions):
+    tmp = []
+
+    for p in champions:
+        tmp.append(p)
+    max = tmp[0]
+    for p1 in tmp:
+        if p1.fitness > max.fitness:
+            max = p1
+    return max
+
 
 # loading players in amount of declared population
 
@@ -255,7 +276,16 @@ def main(thr):  # main function
         text = font.render('Players: ' + str(len(players)) + '     Arrows: ' + str(len(loc_arr)) + '     Generation: '
                            + str(gen_counter), True, (0, 0, 0), (255, 255, 255))
         textRect = text.get_rect()
-        textRect.center = (135, 7)
+        textRect.center = (138, 7)
+        screen.blit(text, textRect)
+
+        champion = get_champion(players)
+        font = pygame.font.Font('freesansbold.ttf', 14)
+        text = font.render('Best fitness: ' + str(champion.fitness) + '  Speed: ' + str(champion.gene.max_speed)[0:4] +
+                           '  X_modifier: ' + str(champion.gene.x_orientation)[0:4] + '  Y_modifier: ' +
+                           str(champion.gene.y_orientation)[0:4] , True, (0, 0, 0), (255, 255, 255))
+        textRect = text.get_rect()
+        textRect.center = (520, 7)
         screen.blit(text, textRect)
 
         for event in pygame.event.get():
