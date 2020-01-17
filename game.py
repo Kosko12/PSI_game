@@ -92,10 +92,10 @@ def if_in_danger(p):
         lock.acquire()
         loc_a = arrows
         lock.release()
-        leftx = 1
-        lefty = 1
+        leftx = 0
+        lefty = 600
         rightx = 800
-        righty = 1
+        righty = 600
         guard = False
         if_moving = False
         danger = p.fear.curr_dng
@@ -116,18 +116,23 @@ def if_in_danger(p):
                                 if closest.x < rightx:
                                     rightx = closest.x
                                     righty = closest.y
-                    l_attr = p.gene.x_orientation * (pow(p.gene.x_orientation*(ar.x - leftx), 2) +
-                                                     pow(abs(p.gene.y_orientation * (ar.y - lefty)), 2))
-                    r_attr = p.gene.x_orientation * (pow(p.gene.x_orientation*(rightx - ar.x), 2) +
-                                                     pow(abs(p.gene.x_orientation*(righty - ar.y)), 2))
+                    l_attr = p.gene.x_orientation * (pow(p.gene.x_orientation*(p.x + 42. - leftx), 2) +
+                                                     pow(abs(p.gene.y_orientation * (p.y - 15.5 - lefty)), 2))
+                    r_attr = p.gene.x_orientation * (pow(p.gene.x_orientation*(rightx - p.x + 42.), 2) +
+                                                     pow(abs(p.gene.x_orientation*(righty - p.y - 15.5)), 2))
+
                     danger = prev_dng + r_attr - l_attr
-                    if danger > 0 and p.x + p.xRange < 800:
+                    if danger > 0 and p.x + p.xRange < 800 or leftx == 0 and lefty == 600:
                         p.speed = p.get_max_speed()
-                    elif danger <= 0 and p.x - p.xRange > 0:
+                    elif danger <= 0 and p.x - p.xRange > 0 or rightx == 800 and righty == 600:
                         p.speed = -1 * p.get_max_speed()
                     else:
                         p.speed = 0
                     prev_dng = danger
+                    leftx = 0
+                    lefty = 600
+                    rightx = 800
+                    righty = 600
             else:
                 if_moving = False
                 if not guard:
@@ -169,15 +174,16 @@ def show_player(p, x, y):  # fun showing element
 def if_in_range(p, a):  # fun which checks if collision has happened
 
     for e in p:
-        for i in range(int(e.x), int(e.x + e.xRange - 4)):
+        for i in range(int(e.x), int(e.x + e.xRange - 15)):
             if int(a.x) == i and (a.y == e.y - e.yRange or a.y > e.y - e.yRange):
                 p.remove(e)
-
+                return True
+    return False
 
 def load_player(x_pos):  # fun which loads arrows/players
     if gen_counter == 1:
         pl = Player.Player(x_pos, playerY, 84., 31., 'ludek.png', 0, 0)
-        speed_gene = random.uniform(0.1, 0.2)
+        speed_gene = random.uniform(1.2, 2.)
         x_mod_gene = random.uniform(0, 0.1)
         y_mod_gene = random.uniform(0, 0.1)
         pl.update_genes(speed_gene, x_mod_gene, y_mod_gene)
@@ -307,7 +313,8 @@ def main(thr):  # main function
             arr.y += arrowYchange
             if arr.y < 600:
                 show_player(arr, arr.x, arr.y)
-            if_in_range(players, arr)
+            if if_in_range(players, arr):
+                loc_arr.remove(arr)
             if len(players) == 0 and arr.y <= 600:
                 if generations > 0:
 
